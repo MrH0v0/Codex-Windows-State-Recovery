@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local diagnostics and recovery artifacts
+*.log
+*-audit.json
+*-dry-run.json
+*-applied.json
+approved-projects.json
+backups_state/
+maintenance-logs/
+reports/
