@@ -3,9 +3,10 @@
 [中文](README.md) | [English](README.en.md)
 
 When a Codex update or unexpected exit makes projects, conversations, or
-settings disappear, the data may still be on disk. This Skill checks local
-files and databases first, then chooses a recovery path based on what is
-actually damaged.
+settings disappear, the data may still be on disk. So, about this problem,
+I designed this Skill and fixed it through a codex general task. 
+This skill's gonna check the local files and the database first, 
+and then pick a recovery method based on the actual problem.
 
 It covers:
 
