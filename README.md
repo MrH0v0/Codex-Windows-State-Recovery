@@ -1,23 +1,33 @@
-# Codex Windows State Recovery
+# Codex Windows 状态恢复
 
-面向 Codex Desktop for Windows 的证据驱动型状态诊断、恢复与持久化
-Skill。
+[中文](README.md) | [English](README.en.md)
 
-当一次 Store/MSIX 更新、异常退出、配置重建或缓存漂移导致以下现象时，
-本项目提供一条可审计、可回退、默认只读的修复路径：
+Codex 更新或异常退出后，项目、聊天记录或配置突然不见了，不一定是数据真的
+丢了。这个 Skill 会先检查本地文件和数据库，再根据实际问题选择恢复方法。
 
-- `config.toml` 变空、被 NUL 字节填充、无法解析或被重新生成；
+它主要处理这些情况：
+
+- `config.toml` 变空、损坏、无法解析或被重新生成；
 - 侧栏项目全部或部分消失；
-- 任务历史在 UI 中不可见，或两套 SQLite 投影出现异常差异；
-- rollout 仍存在，但原工作目录已经移动或丢失；
-- `process_manager\chat_processes.json` 损坏并反复产生通知解析错误；
-- 更新后反复出现 Windows 设置或 sandbox 提示；
-- bundled plugin 的 `latest`、manifest 或绝对 runtime 路径失效；
-- 需要建立 last-known-good 基线、健康快照和人工恢复能力。
+- 聊天记录在界面里不见了，但数据库或 rollout 文件还在；
+- SQLite 损坏，导致 Codex 无法启动或历史记录异常；
+- Windows 更新后反复出现设置或 sandbox 提示；
+- bundled plugin、manifest 或 runtime 路径在更新后失效；
+- 需要保存一份确认可用的备份，方便以后检查或手工恢复。
 
 > [!IMPORTANT]
-> 本 Skill 不会把“当前能启动”自动认定为健康，也不会自动恢复配置、
-> 项目或数据库。写入操作必须显式确认，并在修改前保留 preimage。
+> 本 Skill 默认只检查，不会自动覆盖配置、项目或数据库。需要写文件的步骤
+> 必须明确确认，并且会先备份原文件。
+
+## 平台支持
+
+| 平台 | 支持范围 |
+|---|---|
+| Windows 10/11 | 完整脚本、项目恢复、Guard、健康快照和人工恢复 |
+| macOS | 手工备份、只读检查、历史定位和 SQLite 应急恢复教程 |
+
+Windows 脚本依赖 Appx、计划任务和 PowerShell，不能直接在 macOS 上运行。
+macOS 用户请使用下面的手工流程，不要安装 Windows Guard。
 
 ## 设计目标
 
@@ -60,8 +70,65 @@ flowchart TD
 - [`references/recovery-routing.md`](references/recovery-routing.md)
 - [`references/config-merge-policy.md`](references/config-merge-policy.md)
 - [`references/adversarial-checklist.md`](references/adversarial-checklist.md)
+- [`references/macos-recovery.md`](references/macos-recovery.md)
 
-## 安装 Skill
+## macOS 教程：先备份，再判断是哪一层出了问题
+
+macOS 的 Codex 数据目录是 `$CODEX_HOME`；没有设置该变量时，默认使用
+`~/.codex`。下面的命令只读取或备份数据。
+
+### 1. 退出 Codex 并备份
+
+先从菜单退出 Codex。然后打开 Terminal：
+
+```bash
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+BACKUP_DIR="$HOME/Desktop/codex-backup-$(date +%Y%m%d-%H%M%S)"
+
+mkdir -p "$BACKUP_DIR"
+ditto "$CODEX_DIR" "$BACKUP_DIR/.codex"
+printf 'Backup: %s\n' "$BACKUP_DIR/.codex"
+```
+
+备份中可能包含登录信息、聊天内容和本地路径。不要上传或公开整个备份。
+
+### 2. 检查配置、数据库和会话文件
+
+```bash
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+
+python3 -m json.tool \
+  "$CODEX_DIR/.codex-global-state.json" >/dev/null &&
+  echo "global state: ok"
+
+for db in \
+  "$CODEX_DIR/state_5.sqlite" \
+  "$CODEX_DIR/sqlite/state_5.sqlite"
+do
+  if [ -f "$db" ]; then
+    printf '%s: ' "$db"
+    sqlite3 "$db" 'PRAGMA quick_check;'
+  fi
+done
+
+find \
+  "$CODEX_DIR/sessions" \
+  "$CODEX_DIR/archived_sessions" \
+  -type f -name 'rollout-*.jsonl' 2>/dev/null | wc -l
+```
+
+如果 `state_5.sqlite` 和 rollout 仍在，而侧栏看不到历史，先按“界面或索引
+问题”处理，不要删除数据库或批量重写 `project-order`。
+
+### 3. Codex 因 SQLite 损坏无法启动
+
+只有日志明确指出某个 SQLite 文件损坏，并且完整备份已经完成时，才将该
+数据库和它的 `-wal`、`-shm` 文件一起移到隔离目录。不要直接删除。
+
+详细命令、配置并入方法和重启验收清单见
+[`references/macos-recovery.md`](references/macos-recovery.md)。
+
+## Windows：安装 Skill
 
 要求：
 

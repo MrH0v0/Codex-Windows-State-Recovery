@@ -1,4 +1,4 @@
 interface:
-  display_name: "Codex Windows 状态恢复"
-  short_description: "诊断并安全恢复 Codex Windows 配置、项目与历史状态"
-  default_prompt: "使用 $repair-codex-windows-state 审计并安全恢复这台 Windows 电脑上的 Codex 更新后状态异常。"
+  display_name: "Codex State Recovery"
+  short_description: "Safely inspect and recover Codex projects and local state"
+  default_prompt: "Use $repair-codex-windows-state to inspect this Codex update issue read-only, then choose a reversible recovery path."

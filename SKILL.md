@@ -1,14 +1,23 @@
 ---
 name: repair-codex-windows-state
-description: Diagnose, recover, and harden Codex Desktop state on Windows after an update, restart, reset, or configuration incident. Use when config.toml or the chat process registry is empty, NUL-filled, unparseable, or regenerated; sidebar projects or task history disappear; project-order, SQLite projections, rollout cwd paths, bundled plugin caches, runtime paths, Windows sandbox settings, or package-version transitions drift; Codex repeatedly shows Windows setup prompts or chat-process notification parse warnings; or a last-known-good guard, snapshot, validation-only restore, and post-restart verification workflow is needed.
+description: Diagnose, recover, and harden Codex Desktop state after an update, restart, reset, or configuration incident. Use the full automated workflow on Windows when config.toml or the chat process registry is empty, NUL-filled, unparseable, or regenerated; sidebar projects or task history disappear; project-order, SQLite projections, rollout cwd paths, bundled plugin caches, runtime paths, Windows sandbox settings, or package-version transitions drift; or a last-known-good guard and validation-only restore are needed. On macOS, use the bundled manual recovery guide for evidence-preserving backup, read-only inspection, hidden-history triage, and SQLite quarantine; do not run the Windows PowerShell guard.
 ---
 
 # Repair Codex Windows State
 
-## Operating contract
+## Platform routing
 
-Work on Windows only. Treat `%USERPROFILE%\.codex` as durable user state and the
-Store/MSIX package as replaceable program state.
+- On Windows, use the complete workflow below. Treat
+  `%USERPROFILE%\.codex` as durable user state and the Store/MSIX package as
+  replaceable program state.
+- On macOS, read
+  [references/macos-recovery.md](references/macos-recovery.md), or
+  [references/macos-recovery.en.md](references/macos-recovery.en.md) for
+  English. Do not run the PowerShell installer, Guard, scheduled-task, Appx, or
+  ASAR repair steps.
+- Stop if the platform is neither Windows nor macOS.
+
+## Operating contract
 
 Follow these rules:
 
